@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { getBookings, cancelBooking, blockDay, unblockDay } from '../services/adminApi'
+import { getBookings, cancelBooking, blockDay, unblockDay, getBlockedTimes } from '../services/adminApi'
 
 const ADMIN_PASSWORD = 'password'
 const SLOT_DURATION = 30
@@ -71,8 +71,30 @@ export default function Admin() {
     setLoading(false)
   }
 
+  const fetchBlockedTimes = async () => {
+    try {
+      const data = await getBlockedTimes()
+      if (Array.isArray(data)) {
+        const mapped: Record<string, { type: string; closeAt?: string }> = {}
+        data.forEach((item: any) => {
+          const start = item.start_slot?.substring(0, 5)
+          const end = item.end_slot?.substring(0, 5)
+          if (start === '00:00' && end === '23:59') {
+            mapped[item.date] = { type: 'full_day' }
+          } else if (item.reason === 'early_close') {
+            mapped[item.date] = { type: 'early_close', closeAt: start }
+          }
+        })
+        setBlockedDays(mapped)
+      }
+    } catch { }
+  }
+
   useEffect(() => {
-    if (authed) fetchBookings()
+    if (authed) {
+      fetchBookings()
+      fetchBlockedTimes()
+    }
   }, [authed])
 
   const handleCancel = async (id: string) => {
@@ -83,13 +105,13 @@ export default function Admin() {
 
   const handleBlockDay = async (date: string, type: string, closeAt?: string) => {
     await blockDay(date, type, closeAt)
-    setBlockedDays(prev => ({ ...prev, [date]: { type, closeAt } }))
+    await fetchBlockedTimes()
     setClickedDay(null)
   }
 
   const handleUnblock = async (date: string) => {
     await unblockDay(date)
-    setBlockedDays(prev => { const n = { ...prev }; delete n[date]; return n })
+    await fetchBlockedTimes()
     setClickedDay(null)
   }
 
@@ -100,6 +122,26 @@ export default function Admin() {
   const isFullyClosed = isSunday || blockedInfo?.type === 'full_day'
   const effectiveClose = blockedInfo?.type === 'early_close' && blockedInfo.closeAt ? blockedInfo.closeAt : dayClose
   const slots = isFullyClosed || !dayClose ? [] : generateSlots(DEFAULT_OPEN, effectiveClose)
+
+  const now = new Date()
+  const danishTime = new Intl.DateTimeFormat('da-DK', {
+    timeZone: 'Europe/Copenhagen',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  }).format(now)
+
+  const danishDay = new Intl.DateTimeFormat('da-DK', {
+    timeZone: 'Europe/Copenhagen',
+    weekday: 'short'
+  }).format(now)
+
+  const isOpenNow = (() => {
+    if (isFullyClosed) return false
+    if (!dayClose) return false
+    if (danishTime >= DEFAULT_OPEN && danishTime < effectiveClose) return true
+    return false
+  })()
 
   const dayBookings = bookings.filter(b => b.date === dateStr)
 
@@ -248,9 +290,9 @@ export default function Admin() {
               </div>
               {!isFullyClosed && dayClose && (
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-emerald-400" />
+                  <div className={`w-2 h-2 rounded-full ${isOpenNow ? 'bg-emerald-400' : 'bg-red-400'}`} />
                   <span className="text-xs text-[#6B5A4A] font-medium">
-                    Åbent · Lukker {effectiveClose}
+                    {isOpenNow ? `Åbent · Lukker ${effectiveClose}` : `Lukket · Åbner ${DEFAULT_OPEN}`}
                   </span>
                 </div>
               )}
@@ -433,15 +475,23 @@ export default function Admin() {
                     <div className="border-t border-[#E8DDD0] pt-3">
                       <p className="text-xs font-bold text-[#9B8070] uppercase tracking-widest mb-2">Tidlig lukning</p>
                       <div className="flex gap-2">
-                        <input
-                          type="time"
-                          value={closeAtInput}
-                          onChange={e => setCloseAtInput(e.target.value)}
-                          className="flex-1 border border-[#D4C4B0] rounded-lg px-3 py-2 text-sm text-[#2C1A0E] focus:outline-none focus:border-[#D4A853] bg-white cursor-pointer"
-                        />
+                        <div className="flex-1 relative">
+                          <input
+                            type="time"
+                            value={closeAtInput}
+                            onChange={e => setCloseAtInput(e.target.value)}
+                            className="w-full h-full absolute inset-0 opacity-0 cursor-pointer z-10"
+                          />
+                          <div className="border border-[#D4C4B0] rounded-lg px-3 py-2 text-sm text-[#2C1A0E] bg-white hover:bg-[#FDF3E0] transition-colors flex items-center justify-between pointer-events-none">
+                            <span>{closeAtInput || '15:00'}</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-[#9B8070]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                          </div>
+                        </div>
                         <button
                           onClick={() => handleBlockDay(clickedDay!, 'early_close', closeAtInput)}
-                          className="px-4 py-2 bg-[#2C1A0E] text-[#F5EDD8] rounded-lg text-sm font-medium hover:bg-[#3D2812] transition-colors"
+                          className="px-4 py-2 bg-[#2C1A0E] text-[#F5EDD8] rounded-lg text-sm font-medium hover:bg-[#3D2812] transition-colors shrink-0"
                         >
                           Gem
                         </button>

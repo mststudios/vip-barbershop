@@ -34,3 +34,6 @@ export const getAvailability = (date: string, barberId?: string) => {
   if (barberId) params.append('barber_id', barberId)
   return fetch(`${BASE}/availability?${params}`).then(r => r.json())
 }
+
+export const getBlockedTimes = () =>
+  fetch(`${BASE}/blocked-times`, { headers: HEADERS }).then(r => r.json())
