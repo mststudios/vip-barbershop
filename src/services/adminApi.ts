@@ -1,5 +1,5 @@
 const BASE = import.meta.env.VITE_API_URL
-const ADMIN_PASSWORD = 'vip2024admin'
+const ADMIN_PASSWORD = 'password'
 const HEADERS = {
   'Content-Type': 'application/json',
   'x-admin-password': ADMIN_PASSWORD,

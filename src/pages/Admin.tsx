@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { getBookings, cancelBooking, blockDay, unblockDay } from '../services/adminApi'
 
-const ADMIN_PASSWORD = 'vip2024admin'
+const ADMIN_PASSWORD = 'password'
 const SLOT_DURATION = 30
 const DEFAULT_OPEN = '09:00'
 const WEEKDAY_CLOSE = '18:00'
@@ -433,22 +433,12 @@ export default function Admin() {
                     <div className="border-t border-[#E8DDD0] pt-3">
                       <p className="text-xs font-bold text-[#9B8070] uppercase tracking-widest mb-2">Tidlig lukning</p>
                       <div className="flex gap-2">
-                        <label
-                          htmlFor="close-time-input"
-                          className="flex-1 border border-[#D4C4B0] rounded-lg px-3 py-2 text-sm text-[#2C1A0E] focus-within:border-[#D4A853] cursor-pointer bg-white hover:bg-[#FDF3E0] transition-colors flex items-center justify-between"
-                        >
-                          <span className="font-medium">{closeAtInput || '15:00'}</span>
-                          <input
-                            id="close-time-input"
-                            type="time"
-                            value={closeAtInput}
-                            onChange={e => setCloseAtInput(e.target.value)}
-                            className="sr-only"
-                          />
-                          <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-[#9B8070]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                        </label>
+                        <input
+                          type="time"
+                          value={closeAtInput}
+                          onChange={e => setCloseAtInput(e.target.value)}
+                          className="flex-1 border border-[#D4C4B0] rounded-lg px-3 py-2 text-sm text-[#2C1A0E] focus:outline-none focus:border-[#D4A853] bg-white cursor-pointer"
+                        />
                         <button
                           onClick={() => handleBlockDay(clickedDay!, 'early_close', closeAtInput)}
                           className="px-4 py-2 bg-[#2C1A0E] text-[#F5EDD8] rounded-lg text-sm font-medium hover:bg-[#3D2812] transition-colors"
