@@ -123,24 +123,21 @@ export default function Admin() {
   const effectiveClose = blockedInfo?.type === 'early_close' && blockedInfo.closeAt ? blockedInfo.closeAt : dayClose
   const slots = isFullyClosed || !dayClose ? [] : generateSlots(DEFAULT_OPEN, effectiveClose)
 
-  const now = new Date()
-  const danishTime = new Intl.DateTimeFormat('da-DK', {
-    timeZone: 'Europe/Copenhagen',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false
-  }).format(now)
-
-  const danishDay = new Intl.DateTimeFormat('da-DK', {
-    timeZone: 'Europe/Copenhagen',
-    weekday: 'short'
-  }).format(now)
+  const getDanishHHMM = (): string => {
+    return new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Europe/Copenhagen',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    }).format(new Date())
+  }
 
   const isOpenNow = (() => {
-    if (isFullyClosed) return false
-    if (!dayClose) return false
-    if (danishTime >= DEFAULT_OPEN && danishTime < effectiveClose) return true
-    return false
+    if (isFullyClosed || !dayClose) return false
+    const isToday = toDateString(selectedDate) === toDateString(new Date())
+    if (!isToday) return false
+    const current = getDanishHHMM()
+    return current >= DEFAULT_OPEN && current < effectiveClose
   })()
 
   const dayBookings = bookings.filter(b => b.date === dateStr)
@@ -475,20 +472,13 @@ export default function Admin() {
                     <div className="border-t border-[#E8DDD0] pt-3">
                       <p className="text-xs font-bold text-[#9B8070] uppercase tracking-widest mb-2">Tidlig lukning</p>
                       <div className="flex gap-2">
-                        <div className="flex-1 relative">
-                          <input
-                            type="time"
-                            value={closeAtInput}
-                            onChange={e => setCloseAtInput(e.target.value)}
-                            className="w-full h-full absolute inset-0 opacity-0 cursor-pointer z-10"
-                          />
-                          <div className="border border-[#D4C4B0] rounded-lg px-3 py-2 text-sm text-[#2C1A0E] bg-white hover:bg-[#FDF3E0] transition-colors flex items-center justify-between pointer-events-none">
-                            <span>{closeAtInput || '15:00'}</span>
-                            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-[#9B8070]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                          </div>
-                        </div>
+                        <input
+                          type="time"
+                          value={closeAtInput}
+                          onChange={e => setCloseAtInput(e.target.value)}
+                          style={{ colorScheme: 'light' }}
+                          className="flex-1 border border-[#D4C4B0] rounded-lg px-3 py-2 text-sm font-medium text-[#2C1A0E] bg-white hover:bg-[#FDF3E0] focus:outline-none focus:border-[#D4A853] cursor-pointer transition-colors"
+                        />
                         <button
                           onClick={() => handleBlockDay(clickedDay!, 'early_close', closeAtInput)}
                           className="px-4 py-2 bg-[#2C1A0E] text-[#F5EDD8] rounded-lg text-sm font-medium hover:bg-[#3D2812] transition-colors shrink-0"
