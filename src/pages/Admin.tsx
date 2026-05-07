@@ -26,7 +26,12 @@ const formatDate = (date: Date): string => {
   return date.toLocaleDateString('da-DK', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
 }
 
-const toDateString = (date: Date): string => date.toISOString().split('T')[0]
+const toDateString = (date: Date): string => {
+  const y = date.getFullYear()
+  const m = (date.getMonth() + 1).toString().padStart(2, '0')
+  const d = date.getDate().toString().padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
 
 const getDayClose = (date: Date): string => {
   const day = date.getDay()
@@ -96,6 +101,19 @@ export default function Admin() {
       fetchBlockedTimes()
     }
   }, [authed])
+
+  useEffect(() => {
+    if (clickedDay) {
+      const maxClose = getDayClose(new Date(clickedDay + 'T00:00:00'))
+      if (maxClose) {
+        const [maxH, maxM] = maxClose.split(':').map(Number)
+        const [curH, curM] = closeAtInput.split(':').map(Number)
+        if (curH * 60 + curM > maxH * 60 + maxM) {
+          setCloseAtInput(maxClose)
+        }
+      }
+    }
+  }, [clickedDay, closeAtInput])
 
   const handleCancel = async (id: string) => {
     if (!confirm('Er du sikker på at du vil aflyse denne booking?')) return
@@ -451,7 +469,7 @@ export default function Admin() {
             {clickedDay && (
               <div key={clickedDay} className="w-72 bg-white border border-[#E8DDD0] rounded-xl p-6 h-fit shrink-0 slide-in-right">
                 <h3 className="font-bold text-[#2C1A0E] mb-1 capitalize">
-                  {new Date(clickedDay).toLocaleDateString('da-DK', { weekday: 'long', day: 'numeric', month: 'long' })}
+                  {new Date(clickedDay + 'T00:00:00').toLocaleDateString('da-DK', { weekday: 'long', day: 'numeric', month: 'long' })}
                 </h3>
                 <p className="text-xs text-[#9B8070] mb-6">Vælg hvad der skal ske denne dag</p>
 
@@ -477,8 +495,12 @@ export default function Admin() {
                           onChange={e => setCloseAtInput(e.target.value)}
                           className="flex-1 border border-[#D4C4B0] rounded-lg px-3 py-2 text-sm font-medium text-[#2C1A0E] bg-white focus:outline-none focus:border-[#D4A853] transition-colors"
                         >
-                          {Array.from({ length: 20 }, (_, i) => {
+                          {Array.from({ length: 21 }, (_, i) => {
                             const totalMinutes = 8 * 60 + i * 30
+                            const localDate = new Date(clickedDay! + 'T00:00:00')
+                            const maxClose = getDayClose(localDate)
+                            const [maxH, maxM] = (maxClose || '18:00').split(':').map(Number)
+                            if (totalMinutes > maxH * 60 + maxM) return null
                             const h = Math.floor(totalMinutes / 60).toString().padStart(2, '0')
                             const m = (totalMinutes % 60).toString().padStart(2, '0')
                             return <option key={`${h}:${m}`} value={`${h}:${m}`}>{h}:{m}</option>
