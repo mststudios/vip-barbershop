@@ -472,15 +472,20 @@ export default function Admin() {
                     <div className="border-t border-[#E8DDD0] pt-3">
                       <p className="text-xs font-bold text-[#9B8070] uppercase tracking-widest mb-2">Tidlig lukning</p>
                       <div className="flex gap-2">
-                        <input
-                          type="time"
+                        <select
                           value={closeAtInput}
                           onChange={e => setCloseAtInput(e.target.value)}
-                          style={{ colorScheme: 'light', pointerEvents: 'auto' }}
-                          className="flex-1 border border-[#D4C4B0] rounded-lg px-3 py-2 text-sm font-medium text-[#2C1A0E] bg-white focus:outline-none focus:border-[#D4A853] cursor-text transition-colors"
-                        />
+                          className="flex-1 border border-[#D4C4B0] rounded-lg px-3 py-2 text-sm font-medium text-[#2C1A0E] bg-white focus:outline-none focus:border-[#D4A853] transition-colors"
+                        >
+                          {Array.from({ length: 20 }, (_, i) => {
+                            const totalMinutes = 8 * 60 + i * 30
+                            const h = Math.floor(totalMinutes / 60).toString().padStart(2, '0')
+                            const m = (totalMinutes % 60).toString().padStart(2, '0')
+                            return <option key={`${h}:${m}`} value={`${h}:${m}`}>{h}:{m}</option>
+                          })}
+                        </select>
                         <button
-                          onClick={e => { e.stopPropagation(); handleBlockDay(clickedDay!, 'early_close', closeAtInput) }}
+                          onClick={() => handleBlockDay(clickedDay!, 'early_close', closeAtInput)}
                           className="px-4 py-2 bg-[#2C1A0E] text-[#F5EDD8] rounded-lg text-sm font-medium hover:bg-[#3D2812] transition-colors shrink-0"
                         >
                           Gem
