@@ -408,8 +408,8 @@ export default function Admin() {
                   const isSelected = ds === clickedDay
                   let bg = 'bg-white hover:bg-[#FDF3E0]'
                   if (isSun) bg = 'bg-[#F5F5F5] cursor-default'
-                  else if (blocked?.type === 'full_day') bg = 'bg-red-100 hover:bg-red-200'
-                  else if (blocked?.type === 'early_close') bg = 'bg-amber-100 hover:bg-amber-200'
+                  else if (blocked?.type === 'full_day') bg = '!bg-red-600 hover:!bg-red-700'
+                  else if (blocked?.type === 'early_close') bg = '!bg-amber-400 hover:!bg-amber-500'
                   return (
                     <button
                       key={ds}
@@ -418,7 +418,7 @@ export default function Admin() {
                       className={`
                         ${isSun ? 'bg-[#F5F5F5] cursor-default text-[#C4B8A8]' : `${bg} hover:scale-105 active:scale-95`}
                         ${isSelected ? 'ring-2 ring-[#D4A853]' : ''}
-                        rounded-lg py-2 text-sm text-center border border-[#E8DDD0] transition-all duration-150 relative
+                        rounded-lg py-2 text-sm text-center border ${blocked?.type === 'full_day' ? 'border-red-700' : blocked?.type === 'early_close' ? 'border-amber-500' : 'border-[#E8DDD0]'} transition-all duration-150 relative
                       `}
                     >
                       {isToday ? (
@@ -426,7 +426,7 @@ export default function Admin() {
                           {day.getDate()}
                         </span>
                       ) : (
-                        <span className={isSun ? 'text-[#C4B8A8]' : 'text-[#2C1A0E]'}>
+                        <span className={isSun ? 'text-[#C4B8A8]' : blocked?.type === 'full_day' ? 'text-white font-bold' : blocked?.type === 'early_close' ? 'text-amber-900 font-bold' : 'text-[#2C1A0E]'}>
                           {day.getDate()}
                         </span>
                       )}
@@ -476,11 +476,11 @@ export default function Admin() {
                           type="time"
                           value={closeAtInput}
                           onChange={e => setCloseAtInput(e.target.value)}
-                          style={{ colorScheme: 'light' }}
-                          className="flex-1 border border-[#D4C4B0] rounded-lg px-3 py-2 text-sm font-medium text-[#2C1A0E] bg-white hover:bg-[#FDF3E0] focus:outline-none focus:border-[#D4A853] cursor-pointer transition-colors"
+                          style={{ colorScheme: 'light', pointerEvents: 'auto' }}
+                          className="flex-1 border border-[#D4C4B0] rounded-lg px-3 py-2 text-sm font-medium text-[#2C1A0E] bg-white focus:outline-none focus:border-[#D4A853] cursor-text transition-colors"
                         />
                         <button
-                          onClick={() => handleBlockDay(clickedDay!, 'early_close', closeAtInput)}
+                          onClick={e => { e.stopPropagation(); handleBlockDay(clickedDay!, 'early_close', closeAtInput) }}
                           className="px-4 py-2 bg-[#2C1A0E] text-[#F5EDD8] rounded-lg text-sm font-medium hover:bg-[#3D2812] transition-colors shrink-0"
                         >
                           Gem
